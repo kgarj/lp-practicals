@@ -1,0 +1,108 @@
+class Process:
+    def __init__(self, pid, arrival_time, burst_time, priority=0):
+        self.pid = pid
+        self.arrival_time = arrival_time
+        self.burst_time = burst_time
+        self.remaining_time = burst_time
+        self.priority = priority
+        self.completion_time = 0
+        self.turnaround_time = 0
+        self.waiting_time = 0
+        self.start_time = -1
+
+def fcfs(processes):
+    print("\n--- First Come First Served (FCFS) ---")
+    processes.sort(key=lambda x: x.arrival_time)
+    time = 0
+    for p in processes:
+        if time < p.arrival_time:
+            time = p.arrival_time
+        p.start_time = time
+        time += p.burst_time
+        p.completion_time = time
+        p.turnaround_time = p.completion_time - p.arrival_time
+        p.waiting_time = p.turnaround_time - p.burst_time
+        print(f"Process {p.pid}: starts={p.start_time}, completes={p.completion_time}")
+
+def sjf_preemptive(processes):
+    print("\n--- Shortest Job First (Preemptive) ---")
+    time, completed = 0, 0
+    n = len(processes)
+    processes.sort(key=lambda x: x.arrival_time)
+    while completed < n:
+        ready = [p for p in processes if p.arrival_time <= time and p.remaining_time > 0]
+        if not ready:
+            time += 1
+            continue
+        current = min(ready, key=lambda x: x.remaining_time)
+        if current.start_time == -1:
+            current.start_time = time
+        current.remaining_time -= 1
+        time += 1
+        if current.remaining_time == 0:
+            current.completion_time = time
+            current.turnaround_time = current.completion_time - current.arrival_time
+            current.waiting_time = current.turnaround_time - current.burst_time
+            completed += 1
+            print(f"Process {current.pid}: completes at {time}")
+
+def priority_preemptive(processes):
+    print("\n--- Priority (Preemptive) ---")
+    time, completed = 0, 0
+    n = len(processes)
+    processes.sort(key=lambda x: x.arrival_time)
+    while completed < n:
+        ready = [p for p in processes if p.arrival_time <= time and p.remaining_time > 0]
+        if not ready:
+            time += 1
+            continue
+        current = min(ready, key=lambda x: x.priority)
+        if current.start_time == -1:
+            current.start_time = time
+        current.remaining_time -= 1
+        time += 1
+        if current.remaining_time == 0:
+            current.completion_time = time
+            current.turnaround_time = current.completion_time - current.arrival_time
+            current.waiting_time = current.turnaround_time - current.burst_time
+            completed += 1
+            print(f"Process {current.pid}: completes at {time}")
+
+def round_robin(processes, quantum):
+    print("\n--- Round Robin ---")
+    time = 0
+    ready = []
+    processes.sort(key=lambda x: x.arrival_time)
+    n = len(processes)
+    completed = 0
+    while completed < n:
+        ready = [p for p in processes if p.arrival_time <= time and p.remaining_time > 0]
+        if not ready:
+            time += 1
+            continue
+        current = ready[0]
+        if current.start_time == -1:
+            current.start_time = time
+        exec_time = min(quantum, current.remaining_time)
+        current.remaining_time -= exec_time
+        time += exec_time
+        if current.remaining_time == 0:
+            current.completion_time = time
+            current.turnaround_time = current.completion_time - current.arrival_time
+            current.waiting_time = current.turnaround_time - current.burst_time
+            completed += 1
+        print(f"Process {current.pid} executes from {time - exec_time} to {time}")
+
+# --- Input Data ---
+processes = [
+    Process(1, 0, 8, 2),
+    Process(2, 1, 4, 1),
+    Process(3, 2, 9, 3),
+    Process(4, 3, 5, 4)
+]
+
+# --- Run All ---
+fcfs([Process(p.pid,p.arrival_time,p.burst_time,p.priority) for p in processes])
+sjf_preemptive([Process(p.pid,p.arrival_time,p.burst_time,p.priority) for p in processes])
+priority_preemptive([Process(p.pid,p.arrival_time,p.burst_time,p.priority) for p in processes])
+round_robin([Process(p.pid,p.arrival_time,p.burst_time,p.priority) for p in processes], quantum=2)
